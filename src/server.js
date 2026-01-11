@@ -11,7 +11,9 @@ const app = express();
 const PORT = 3000;
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false, // Disabling strict CSP for this POC to allow inline scripts
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
