@@ -4,8 +4,10 @@ A strict, secure workflow for collecting missing user documents using temporary,
 
 ## Features
 *   **Secure Links**: 32-byte high-entropy tokens with expiration logic.
-*   **Strict Validation**: Prevents file spoofing by checking magic bytes (hex signatures) rather than just extensions.
-*   **Safe Storage**: Renames files to avoid directory traversal or overwrite attacks.
+*   **Strict Validation**: Prevents file spoofing by checking magic bytes (hex signatures).
+*   **Safe Storage**: Renames files with unique IDs to prevent directory traversal.
+*   **File Integriy (MVP)**: Automatically calculates **SHA-256 Hash** for every upload.
+*   **Vault Logging (MVP)**: Generates a JSON receipt with timestamp, user ID, and file hash.
 
 ## Prerequisites
 *   Node.js (v14 or later)
