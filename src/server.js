@@ -2,7 +2,9 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
+
 const fs = require('fs');
+const crypto = require('crypto'); // Added for Hashing
 const { createUploadLink, validateToken } = require('./tokens');
 const { upload, validateFileHeader } = require('./upload');
 const db = require('./db');
@@ -52,8 +54,32 @@ app.post('/api/upload/:token', validateToken, upload.single('document'), (req, r
             return res.status(400).json({ error: 'File content does not match extension (Spoofing detected).' });
         }
 
+        // Valid file! Now compute Hash (MVP Requirement)
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+        // Log Metadata to "Vault"
+        const metadata = {
+            ticketId: req.uploadRequest.userId, // Mapping UserID as TicketID for MVP
+            uploadToken: req.params.token,
+            originalName: req.file.originalname,
+            storedFilename: req.file.filename,
+            fileHash: fileHash,
+            size: req.file.size,
+            ingestedAt: new Date().toISOString()
+        };
+
+        db.logUpload(metadata);
+
         // Success - in real app, move to S3 here
-        res.json({ success: true, message: 'File uploaded safely.' });
+        res.json({
+            success: true,
+            message: 'File uploaded safely and hashed.',
+            vaultReceipt: {
+                hash: fileHash,
+                timestamp: metadata.ingestedAt
+            }
+        });
 
     } catch (err) {
         console.error(err);

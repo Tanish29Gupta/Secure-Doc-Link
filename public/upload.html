@@ -174,8 +174,16 @@
 
                 if (!res.ok) throw new Error(data.error);
 
-                status.textContent = '✔ ' + data.message;
-                status.className = 'success';
+                status.innerHTML = `
+                    <div style="margin-top: 15px; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6;">
+                        <div style="color: #2e7d32; font-weight: bold; margin-bottom: 5px;">✔ ${data.message}</div>
+                        <div style="font-size: 12px; color: #555;">
+                            <strong>Vault Receipt:</strong><br>
+                            Hash: <code style="background: #eee; padding: 2px;">${data.vaultReceipt.hash.substring(0, 20)}...</code><br>
+                            Time: ${new Date(data.vaultReceipt.timestamp).toLocaleTimeString()}
+                        </div>
+                    </div>`;
+                status.className = '';
                 btn.textContent = 'Upload Complete';
                 input.disabled = true;
 
