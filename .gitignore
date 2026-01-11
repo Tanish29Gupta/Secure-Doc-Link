@@ -1,0 +1,11 @@
+node_modules/
+uploads/
+*.log
+.env
+test_gen.js
+debug_magic.js
+verify_basic.js
+verify_full.js
+fake.pdf
+valid.pdf
+valid.jpg

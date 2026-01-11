@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Generate Secure Link</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; padding: 10px; background: #f0f0f0; border: 1px solid #ddd; display: none; }
+    </style>
+</head>
+<body>
+    <h1>Generate Upload Request</h1>
+    <div class="form-group">
+        <label>User ID</label>
+        <input type="text" id="userId" placeholder="e.g. user-123">
+    </div>
+    <div class="form-group">
+        <label>Missing Document</label>
+        <select id="docType">
+            <option value="passport">Passport Copy</option>
+            <option value="utility_bill">Utility Bill</option>
+            <option value="bank_statement">Bank Statement</option>
+        </select>
+    </div>
+    <button onclick="generateLink()">Generate Link</button>
+
+    <div id="result">
+        <p><strong>Secure Link:</strong></p>
+        <a id="link" href="#" target="_blank"></a>
+    </div>
+
+    <script>
+        async function generateLink() {
+            const userId = document.getElementById('userId').value;
+            const docType = document.getElementById('docType').value;
+
+            const res = await fetch('/api/admin/create-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, missingDocs: [docType] })
+            });
+            
+            const data = await res.json();
+            if (data.success) {
+                const resultDiv = document.getElementById('result');
+                const linkA = document.getElementById('link');
+                linkA.href = data.link;
+                linkA.textContent = data.link;
+                resultDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

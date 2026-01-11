@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Document Upload</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        .secure-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .info {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        #status {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #d32f2f;
+        }
+
+        .success {
+            color: #2e7d32;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="secure-badge">🔒 Encrypted & Secure Transfer</div>
+        <div id="loading">Validating secure link...</div>
+
+        <div id="content" style="display:none">
+            <h2>Upload Required</h2>
+            <p class="info">We need the following document to complete your request:</p>
+            <ul id="docList"></ul>
+
+            <div class="upload-area">
+                <input type="file" id="fileInput" accept=".pdf, .jpg, .jpeg, .png">
+                <p>Drag file here or click to browse</p>
+                <small>(Max 5MB - PDF, JPG, PNG)</small>
+            </div>
+
+            <button onclick="uploadFile()" id="btnUpload">Upload Securely</button>
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+
+        // 1. Validate Token on Load
+        async function checkToken() {
+            if (!token) {
+                showError('Invalid Link: Token missing.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/request/${token}`);
+                if (!res.ok) throw new Error((await res.json()).error);
+
+                const data = await res.json();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                const list = document.getElementById('docList');
+                data.requiredDocs.forEach(doc => {
+                    const li = document.createElement('li');
+                    li.textContent = doc.replace('_', ' ').toUpperCase();
+                    list.appendChild(li);
+                });
+
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').innerHTML = `<h3 class="error">Access Denied</h3><p>${msg}</p>`;
+        }
+
+        // 2. Handle Upload
+        async function uploadFile() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            const btn = document.getElementById('btnUpload');
+            const status = document.getElementById('status');
+
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+            status.textContent = '';
+            status.className = '';
+
+            const formData = new FormData();
+            formData.append('document', file);
+
+            try {
+                const res = await fetch(`/api/upload/${token}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error);
+
+                status.textContent = '✔ ' + data.message;
+                status.className = 'success';
+                btn.textContent = 'Upload Complete';
+                input.disabled = true;
+
+            } catch (err) {
+                status.textContent = '✖ Error: ' + err.message;
+                status.className = 'error';
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
+        }
+
+        checkToken();
+    </script>
+</body>
+
+</html>
